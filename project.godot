@@ -21,6 +21,10 @@ Signals="*res://scripts/autoloads/signals.gd"
 Assets="*res://scripts/autoloads/assets.gd"
 Scoring="*res://scripts/autoloads/scoring.gd"
 
+[editor]
+
+run/main_run_args="--verbose"
+
 [rendering]
 
 renderer/rendering_method="mobile"
