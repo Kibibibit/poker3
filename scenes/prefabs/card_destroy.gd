@@ -11,6 +11,7 @@ var box_size: Vector2 = Vector2(CardNode.WIDTH, CardNode.HEIGHT)*0.5
 func _ready():
 	timer.timeout.connect(_destroy)
 
+
 func _process(delta: float):
 	if (box_visible):
 		box_size = box_size.move_toward(Vector2(0,0), delta*ANIM_SPEED)
@@ -27,5 +28,8 @@ func _draw():
 		draw_rect(rect, Color.RED,false,4.0)
 
 func _destroy():
-	get_parent().remove_child.call_deferred(self)
 	queue_free()
+	get_parent().remove_child.call_deferred(self)
+
+func _exit_tree():
+	timer.timeout.disconnect(_destroy)

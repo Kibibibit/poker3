@@ -237,4 +237,8 @@ func _exit_tree():
 	Signals.card_mouse_entered.disconnect(_card_mouse_entered)
 	Signals.card_mouse_exited.disconnect(_card_mouse_exited)
 	Signals.card_reached_target.disconnect(_card_finished_animating)
+	
+	for child in get_children():
+		remove_child(child)
+		child.free()
 
