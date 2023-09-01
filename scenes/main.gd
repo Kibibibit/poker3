@@ -16,9 +16,9 @@ func _ready():
 	game_board.score_updated.connect(_score_updated)
 	Signals.destroy_card.connect(_destroy_card)
 	
-func _score_updated(amount: int, new_score: int):
+func _score_updated(amount: int, new_score: int, base_points: int, hand_type: int):
 	score_label.text = "Score: %s" % new_score
-	hand_value_label.text = "Last Hand: +%s" % amount
+	hand_value_label.text = "Last Hand: +%s (%s x%s for %s)" % [amount, base_points, hand_type, Scoring._HAND_TYPE_MAP[hand_type]]
 
 func _destroy_card(pos: Vector2):
 	var card_destroy: Node2D = Assets.card_destroy.instantiate()
