@@ -17,6 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+Signals="*res://scripts/autoloads/signals.gd"
 Assets="*res://scripts/autoloads/assets.gd"
 Scoring="*res://scripts/autoloads/scoring.gd"
 

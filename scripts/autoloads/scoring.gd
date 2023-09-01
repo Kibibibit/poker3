@@ -1,22 +1,51 @@
 extends Node
 
-const HIGH_CARD: int = 0
-const ONE_PAIR: int = 1
-const TWO_PAIR: int = 2
-const THREE_OF_A_KIND: int = 4
-const STRAIGHT: int = 8
-const FLUSH: int = 16
-const FULL_HOUSE: int = 32
-const FOUR_OF_A_KIND: int = 64
-const STRAIGHT_FLUSH: int = 128
-const ROYAL_FLUSH: int = 256
+const HIGH_CARD: int = 1
+const ONE_PAIR: int = 2
+const TWO_PAIR: int = 4
+const THREE_OF_A_KIND: int = 8
+const STRAIGHT: int = 16
+const FLUSH: int = 32
+const FULL_HOUSE: int = 64
+const FOUR_OF_A_KIND: int = 128
+const STRAIGHT_FLUSH: int = 256
+const ROYAL_FLUSH: int = 512
+
+const _HAND_TYPE_MAP: Dictionary = {
+	HIGH_CARD: "high card",
+	ONE_PAIR: "pair",
+	TWO_PAIR: "two-pair",
+	THREE_OF_A_KIND: "3-of-a-kind",
+	STRAIGHT: "straight",
+	FLUSH: "flush",
+	FULL_HOUSE:"full house",
+	FOUR_OF_A_KIND: "4-of-a-kind",
+	STRAIGHT_FLUSH: "straight flush",
+	ROYAL_FLUSH: "royal flush"
+}
 
 func score_hand(hand: Array[Card]) -> int:
+	var hand_type: int = get_hand_type(hand)
+	var base_points: int = get_base_points(hand, hand_type)
+	return hand_type*base_points
+
+func get_base_points(hand: Array[Card], hand_type: int = HIGH_CARD) -> int:
+	var out: int = 0
+	for card in hand:
+		var value: int = card.value+1
+		if (card.value == Card.ACE):
+			value = Card.KING+2
+		if (hand_type == HIGH_CARD):
+			out = max(out, value)
+		else:
+			out += value
+	return out
+
+func get_hand_type(hand: Array[Card]) -> int:
 	
 	var histogram: Dictionary = {}
 	
 	var hand_type: int = HIGH_CARD
-	var base_points: int = 0
 	
 	var is_flush = true
 	var last_suit = -1
@@ -29,11 +58,6 @@ func score_hand(hand: Array[Card]) -> int:
 			histogram[card.value] += 1
 		else:
 			histogram[card.value] = 1
-		
-		if (card.value == Card.ACE):
-			base_points += Card.KING+1
-		else:
-			base_points += card.value+1
 		
 		if (histogram[card.value] > highest_dupe):
 			highest_dupe = histogram[card.value]
@@ -78,33 +102,21 @@ func score_hand(hand: Array[Card]) -> int:
 	
 	if (is_straight && is_flush && barrow):
 		hand_type = ROYAL_FLUSH
-		print("ROYAL FLUSH")
 	elif (is_straight && is_flush):
 		hand_type = STRAIGHT_FLUSH
-		print("STRAIGHT FLUSH")
 	elif (four_of_a_kind):
 		hand_type = FOUR_OF_A_KIND
-		print("FOUR OF A KIND")
 	elif (full_house):
 		hand_type = FULL_HOUSE
-		print("FULL HOUSE")
 	elif (is_flush):
 		hand_type = FLUSH
-		print("FLUSH")
 	elif (is_straight):
 		hand_type = STRAIGHT
-		print("STRAIGHT")
 	elif (three_of_a_kind):
 		hand_type = THREE_OF_A_KIND
-		print("THREE OF A KIND")
 	elif (two_pair):
 		hand_type = TWO_PAIR
-		print("TWO PAIR")
 	elif (one_pair):
 		hand_type = ONE_PAIR
-		print("ONE PAIR")
-	else:
-		print("HIGH CARD")
-		return keys.max()+1
 	
-	return base_points*hand_type
+	return hand_type
