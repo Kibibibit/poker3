@@ -11,9 +11,6 @@ const HEIGHT: int = floori(RHEIGHT*SCALE)
 const GRAVITY: float = 9.8
 const MOVE_SPEED: float = 10.0
 
-signal reached_target_position(instance_id: int)
-signal mouse_entered(instance_id: int)
-signal mouse_exited(instance_id: int)
 
 
 const VALUE_ORDER: Array[int] = [
@@ -93,7 +90,7 @@ func _process(delta):
 			position = target_position
 			velocity = Vector2(0,0)
 			animating_position = false
-			reached_target_position.emit(get_instance_id())
+			Signals.card_reached_target.emit(get_instance_id())
 
 
 
@@ -133,11 +130,14 @@ func _get_region() -> Rect2:
 	return Rect2(starting_point,Vector2(RWIDTH,RHEIGHT))
 
 func _mouse_entered():
-	mouse_entered.emit(get_instance_id())
+	Signals.card_mouse_entered.emit(get_instance_id())
 
 func _mouse_exited():
-	mouse_exited.emit(get_instance_id())
+	Signals.card_mouse_exited.emit(get_instance_id())
 
 func highlight(p_highlight: bool):
 	highlighted = p_highlight
 	queue_redraw()
+
+func _exit_tree()->void:
+	Signals.destroy_card.emit(position+ Vector2(WIDTH, HEIGHT)*0.5)

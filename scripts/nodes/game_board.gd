@@ -29,6 +29,9 @@ func _ready():
 	for x in GRID_WIDTH:
 		spawn_queues[x] = []
 	start_game()
+	Signals.card_mouse_entered.connect(_card_mouse_entered)
+	Signals.card_mouse_exited.connect(_card_mouse_exited)
+	Signals.card_reached_target.connect(_card_finished_animating)
 
 func start_game():
 	_generate_deck()
@@ -65,9 +68,14 @@ func _can_select(card_id: int) -> bool:
 	if (selected_cards.is_empty()):
 		return true
 	else:
-		var last_pos: Vector2 = Vector2(_get_card(selected_cards.back()).grid_position)
-		var new_pos: Vector2 = Vector2(_get_card(card_id).grid_position)
-		return last_pos.distance_squared_to(new_pos) <= 2
+		if !card_id in awaiting_cards:
+			var last_card: CardNode = _get_card(selected_cards.back())
+			var next_card: CardNode = _get_card(card_id)
+			if (last_card != null && next_card != null):
+				var last_pos: Vector2 = Vector2(last_card.grid_position)
+				var new_pos: Vector2 = Vector2(next_card.grid_position)
+				return last_pos.distance_squared_to(new_pos) <= 2
+	return false
 
 func _spawn_card(grid_pos: Vector2i):
 	var card: Card = _draw_card()
@@ -79,12 +87,6 @@ func _spawn_card(grid_pos: Vector2i):
 	grid.set_at(card_id, grid_pos)
 	
 	add_child(card_node)
-	
-	card_node.mouse_entered.connect(_card_mouse_entered)
-	card_node.mouse_exited.connect(_card_mouse_exited)
-	card_node.reached_target_position.connect(_card_finished_animating)
-	
-
 	
 	card_node.position = _get_card_pos(Vector2i(grid_pos.x, grid_pos.y-GRID_HEIGHT))
 	card_node.animate_to(_get_card_pos(grid_pos))
@@ -125,6 +127,34 @@ func _get_card_pos(grid_pos: Vector2i):
 func _card_finished_animating(card_id: int):
 	if (card_id in awaiting_cards):
 		awaiting_cards.remove_at(awaiting_cards.find(card_id))
+		if (awaiting_cards.is_empty()):
+			_cascade()
+
+func _clear_selected() -> void:
+	while (!selected_cards.is_empty()):
+		var card_node: CardNode = _get_card(selected_cards.pop_back())
+		if (card_node != null):
+			card_node.highlight(false)
+	dragging = false
+	mouse_down = false
+	Signals.clear_lines.emit()
+
+func _cascade() -> void:
+	for _y in GRID_HEIGHT:
+		var y: int = GRID_HEIGHT-1-_y
+		var cards: Array[Card] = []
+		var card_ids: Array[int] = []
+		for x in GRID_WIDTH:
+			var card_id: int = grid.get_at(Vector2i(x, y))
+			if (card_id != grid.NULL && !card_id in awaiting_cards):
+				card_ids.append(card_id)
+				var card_node: CardNode = instance_from_id(card_id)
+				cards.append(card_node.card)
+		if (cards.size() == 5):
+			var hand_type = Scoring.get_hand_type(cards)
+			if (hand_type > Scoring.ONE_PAIR):
+				_clear_selected()
+				_clear_cards(card_ids)
 
 func _card_mouse_entered(card_id: int):
 	current_card = card_id
@@ -132,6 +162,8 @@ func _card_mouse_entered(card_id: int):
 		if (_can_select(card_id)):
 			selected_cards.append(card_id)
 			_highlight_card(card_id)
+			if (selected_cards.size() > 1):
+				Signals.add_line.emit(card_id, selected_cards[selected_cards.size()-2])
 
 func _card_mouse_exited(_card_id: int):
 	current_card = -1
@@ -149,7 +181,9 @@ func _unhandled_input(event):
 			else:
 				mouse_down = false
 				if (!selected_cards.is_empty()):
-					_end_drag()
+					_end_drag(true)
+		if (event.button_index == MOUSE_BUTTON_RIGHT && event.pressed):
+			_end_drag(false)
 
 func _highlight_card(card_id: int):
 	var card_node: CardNode = _get_card(card_id)
@@ -162,10 +196,7 @@ func _delete_card(card_id: int):
 	grid.set_at(Grid.NULL, pos)
 	
 	var card_node: CardNode = _get_card(card_id)
-	
-	card_node.mouse_entered.disconnect(_card_mouse_entered)
-	card_node.mouse_exited.disconnect(_card_mouse_exited)
-	card_node.reached_target_position.disconnect(_card_finished_animating)
+
 	discards.append(card_node.card)
 	remove_child(card_node)
 	card_node.queue_free()
@@ -174,25 +205,36 @@ func _delete_card(card_id: int):
 func _start_drag():
 	dragging = true
 	selected_cards.append(current_card)
-	
 
-func _end_drag():
-	var cards: Array[Card] = []
+func _end_drag(do_clear: bool):
+	if (do_clear):
+		_clear_cards(selected_cards)
+	Signals.clear_lines.emit()
+	Signals.clear_potential_hand.emit()
 	for card_id in selected_cards:
 		var card_node: CardNode = _get_card(card_id)
 		if (card_node != null):
 			card_node.highlight(false)
+	selected_cards.clear()
+	dragging = false
+
+func _clear_cards(card_ids: Array[int]) -> void:
+	var cards: Array[Card] = []
+	for card_id in card_ids:
+		var card_node: CardNode = _get_card(card_id)
+		if (card_node != null):
 			cards.append(card_node.card)
-	
 	if (cards.size() == 5):
 		var hand_score = Scoring.score_hand(cards)
 		score += hand_score
 		score_updated.emit(hand_score, score)
-		for card_id in selected_cards:
+		for card_id in card_ids:
 			_delete_card(card_id)
 		_fill_board()
+
+func _exit_tree():
 	
-	selected_cards.clear()
-	dragging = false
-	
+	Signals.card_mouse_entered.disconnect(_card_mouse_entered)
+	Signals.card_mouse_exited.disconnect(_card_mouse_exited)
+	Signals.card_reached_target.disconnect(_card_finished_animating)
 
