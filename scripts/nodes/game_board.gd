@@ -15,7 +15,7 @@ var discards: Array[Card] = []
 
 var awaiting_cards: Array[int]
 
-var spawn_queues: Dictionary = {}
+var spawn_queues: SpawnQueues = SpawnQueues.new(GRID_WIDTH)
 
 var mouse_down: bool = false
 var current_card: int = -1
@@ -26,8 +26,6 @@ var dragging = false
 var score: int = 0
 
 func _ready():
-	for x in GRID_WIDTH:
-		spawn_queues[x] = []
 	start_game()
 	Signals.card_mouse_entered.connect(_card_mouse_entered)
 	Signals.card_mouse_exited.connect(_card_mouse_exited)
@@ -81,16 +79,24 @@ func _spawn_card(grid_pos: Vector2i):
 	var card: Card = _draw_card()
 	var card_node: CardNode = CardNode.new(card)
 	card_node.grid_position = grid_pos
-	var card_id = card_node.get_instance_id()
-	awaiting_cards.append(card_id)
-	
-	grid.set_at(card_id, grid_pos)
-	
-	add_child(card_node)
-	
-	card_node.position = _get_card_pos(Vector2i(grid_pos.x, grid_pos.y-GRID_HEIGHT))
-	card_node.animate_to(_get_card_pos(grid_pos))
-	
+	spawn_queues.add_card(card_node)
+
+func _process(_delta: float) -> void:
+	for x in GRID_WIDTH:
+		if (spawn_queues.column_not_empty(x)):
+			_do_spawn_cards(x)
+
+func _do_spawn_cards(column: int):
+	var card_ids: Array[int] = spawn_queues.empty_column(column)
+	for i in card_ids.size():
+		var card_id: int = card_ids[i]
+		awaiting_cards.append(card_id)
+		var card_node: CardNode = instance_from_id(card_id)
+		var grid_pos: Vector2i = card_node.grid_position
+		grid.set_at(card_id, grid_pos)
+		add_child(card_node)
+		card_node.position = _get_card_pos(Vector2i(grid_pos.x, -i-1))
+		card_node.animate_to(_get_card_pos(grid_pos))
 
 
 func _fill_board():
