@@ -20,6 +20,20 @@ const JACK: int = 10
 const QUEEN: int = 11
 const KING: int = 12
 
+const SUIT_LABELS: Dictionary = {
+	DIAMONDS: "D",
+	HEARTS: "H",
+	SPADES: "S",
+	CLUBS: "C"
+}
+
+const VALUE_LABELS: Dictionary = {
+	ACE:"A",
+	JACK:"J",
+	QUEEN:"Q",
+	KING:"K"
+}
+
 var value: int
 var suit: int
 
@@ -27,6 +41,13 @@ func _init(p_value: int, p_suit: int)->void:
 	value = p_value
 	suit = p_suit
 
+func _to_string() -> String:
+	var label = value
+	if (VALUE_LABELS.has(value)):
+		label = VALUE_LABELS[value]
+	else:
+		label = value+1
+	return "%s%s" % [SUIT_LABELS[suit], label]
 
 
 

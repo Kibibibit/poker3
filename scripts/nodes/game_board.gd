@@ -2,9 +2,9 @@ extends Node2D
 class_name GameBoard
 
 const GRID_WIDTH: int = 5
-const GRID_HEIGHT: int = 4
+const GRID_HEIGHT: int = 6
 
-signal score_updated(amount: int, new_score:int, hand_type: int)
+signal score_updated(amount: int, new_score:int, hand_type: int, cards: Array[Card])
 
 
 @onready
@@ -235,7 +235,7 @@ func _clear_cards(card_ids: Array[int]) -> void:
 		var base_points = Scoring.get_base_points(cards, hand_type)
 		var hand_score = base_points*hand_type
 		score += hand_score
-		score_updated.emit(hand_score, score, base_points, hand_type)
+		score_updated.emit(hand_score, score, base_points, hand_type, cards)
 		for card_id in card_ids:
 			_delete_card(card_id)
 		_fill_board()

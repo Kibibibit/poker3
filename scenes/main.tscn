@@ -26,3 +26,7 @@ text = "Score: 0"
 [node name="HandValueLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 text = "Last Hand: 0"
+
+[node name="HandsLabels" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Previous Hands:"
