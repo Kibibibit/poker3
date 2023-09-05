@@ -1,10 +1,10 @@
 extends RefCounted
 class_name Card
 
-const DIAMONDS: int = 0
-const HEARTS: int = 1
+const CLUBS: int = 0
+const DIAMONDS: int = 1
 const SPADES: int = 2
-const CLUBS: int = 3
+const HEARTS: int = 3
 
 const ACE: int = 0
 const TWO: int = 1

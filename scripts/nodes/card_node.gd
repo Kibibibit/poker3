@@ -1,9 +1,9 @@
 extends Sprite2D
 class_name CardNode
 
-const RWIDTH: int = 140
-const RHEIGHT: int = 190
-const SCALE: float = 0.5
+const RWIDTH: int = 378
+const RHEIGHT: int = 526
+const SCALE: float = 0.18
 
 const WIDTH: int = floori(RWIDTH*SCALE)
 const HEIGHT: int = floori(RHEIGHT*SCALE)
@@ -11,30 +11,6 @@ const HEIGHT: int = floori(RHEIGHT*SCALE)
 const GRAVITY: float = 9.8
 const MOVE_SPEED: float = 10.0
 
-
-
-const VALUE_ORDER: Array[int] = [
-	3, # Ace
-	12, # 2
-	11, # 3
-	10, # 4
-	9, # 5
-	8, # 6
-	7, # 7
-	6, # 8
-	5, # 9
-	4, # 10
-	2, # Jack
-	0, # Queen
-	1, # King
-]
-
-const REIGON_MAP: Dictionary = {
-	Card.DIAMONDS: Vector2(2, 7),
-	Card.HEARTS: Vector2(1, 4),
-	Card.SPADES: Vector2(0, 0),
-	Card.CLUBS: Vector2(4,0)
-}
 
 var area: Area2D
 var collision_shape: CollisionShape2D
@@ -58,6 +34,7 @@ func _ready() -> void:
 	texture = Assets.cards
 	centered = false
 	region_enabled = true
+	scale = Vector2(SCALE, SCALE)
 	region_rect = _get_region()
 	area = Area2D.new()
 	collision_shape = CollisionShape2D.new()
@@ -104,30 +81,7 @@ func _draw():
 		draw_rect(Rect2(0,0,RWIDTH,RHEIGHT), Color.RED, false, 10)
 
 func _get_region() -> Rect2:
-	
-	var check_suit: int = card.suit
-	
-	if (card.value == 2):
-		if (card.suit == Card.CLUBS):
-			check_suit = Card.HEARTS
-		elif (card.suit == Card.HEARTS):
-			check_suit = Card.CLUBS
-	
-	var starting_point: Vector2 = REIGON_MAP[check_suit]
-	
-	starting_point.y += VALUE_ORDER[card.value]
-	
-	if (starting_point.y >= 10):
-		starting_point.y -= 10
-		starting_point.x += 1
-		
-	starting_point.x *= RWIDTH
-	starting_point.y *= RHEIGHT
-	
-	scale = Vector2(0.5,0.5)
-	
-	
-	return Rect2(starting_point,Vector2(RWIDTH,RHEIGHT))
+	return Rect2(Vector2(card.value, card.suit)*Vector2(RWIDTH, RHEIGHT),Vector2(RWIDTH,RHEIGHT))
 
 func _mouse_entered():
 	Signals.card_mouse_entered.emit(get_instance_id())
